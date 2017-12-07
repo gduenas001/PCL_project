@@ -32,6 +32,7 @@
 #include <pcl/common/common_headers.h>
 #include <pcl/filters/radius_outlier_removal.h>
 #include <pcl/segmentation/sac_segmentation.h>
+#include <pthread.h>
 
 
 // User specific
@@ -45,9 +46,10 @@
 #include "read_pcd_file.h"
 #include "configure_viewer.h"
 
+
+
 using namespace std;
 using namespace pcl;
-
 
 
 
