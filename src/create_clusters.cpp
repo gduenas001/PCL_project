@@ -1,0 +1,75 @@
+#include <pcl/common/common.h>
+#include <pcl/common/distances.h>
+#include <pcl/point_types.h>
+#include <pcl/ModelCoefficients.h>
+#include <pcl/filters/extract_indices.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/filters/conditional_removal.h>
+#include <pcl/filters/passthrough.h>
+#include <pcl/kdtree/kdtree.h>
+#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/search/kdtree.h>
+#include <pcl/search/organized.h>
+#include <pcl/segmentation/extract_clusters.h>
+
+
+#include "classes_and_structs.h"
+#include "create_clusters.h"
+
+
+using namespace std;
+
+
+void create_clusters (pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, 
+					  vector<pcl::PointIndices> &cluster_indices,
+					  parameters P)
+{
+
+	// Voxels
+	// pcl::VoxelGrid<pcl::PointXYZ> vg;
+	// vg.setInputCloud (cloud);
+	// vg.setLeafSize (P.leafSize, P.leafSize, P.leafSize);
+	// // vg.setMinimumPointsNumberPerVoxel(2);
+	// vg.filter (*cloud);
+
+	// Eliminate far points
+	pcl::PassThrough<pcl::PointXYZ> pass;
+	// in X
+	pass.setInputCloud (cloud);
+	pass.setFilterFieldName ("x");
+	pass.setFilterLimits (-P.limitsXY, P.limitsXY);
+	pass.filter (*cloud);
+	// in Y
+	pass.setInputCloud (cloud);
+	pass.setFilterFieldName ("y");
+	pass.setFilterLimits (-P.limitsXY, P.limitsXY);
+	pass.filter (*cloud);
+	// in Z
+	pass.setInputCloud (cloud);
+	pass.setFilterFieldName ("z");
+	pass.setFilterLimits (P.limitZlow, P.limitZhigh);
+	pass.filter (*cloud);
+
+
+
+	// Remove outliers
+/*	pcl::RadiusOutlierRemoval<pcl::PointXYZ> rorfilter (false);
+	rorfilter.setInputCloud (cloud);
+	rorfilter.setRadiusSearch (3*P.leafSize);
+	rorfilter.setMinNeighborsInRadius (6);
+	rorfilter.filter (*cloud);*/
+
+
+
+	pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
+	tree->setInputCloud (cloud);
+	pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
+	ec.setClusterTolerance (P.clusterTolerance);
+	ec.setMinClusterSize (P.minClusterSize);
+	ec.setSearchMethod (tree);
+	ec.setInputCloud (cloud);
+
+	ec.extract (cluster_indices);
+ 	
+
+}
