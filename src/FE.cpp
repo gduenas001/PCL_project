@@ -16,7 +16,6 @@
 #include <pcl/filters/conditional_removal.h>
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl/visualization/pcl_visualizer.h>
-#include <pcl/visualization/cloud_viewer.h>
 #include <pcl/ModelCoefficients.h>
 #include <pcl/io/io.h>
 #include <pcl/io/pcd_io.h>
@@ -32,7 +31,7 @@
 #include <pcl/common/common_headers.h>
 #include <pcl/filters/radius_outlier_removal.h>
 #include <pcl/segmentation/sac_segmentation.h>
-#include <pthread.h>
+#include <thread>
 
 
 // User specific
@@ -46,10 +45,27 @@
 #include "read_pcd_file.h"
 #include "configure_viewer.h"
 
+#define VERBOSE false
 
 
 using namespace std;
 using namespace pcl;
+
+
+
+void read_pcd_file_callback(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, int epoch)
+{
+	// Read current file
+	pcl::PCDReader reader;
+	string filename2;
+	stringstream sa;
+	sa << setw(6) << setfill('0') << epoch;
+	filename2= sa.str();
+	reader.read ("../Data/pcd-files/KITTI/" + filename2 + ".pcd", *cloud);
+	if (VERBOSE)
+		cout<< "Read next cloud: "<< epoch<< endl;
+}
+
 
 
 
@@ -78,16 +94,35 @@ initialize_parameters(P);
 
 pcl::visualization::PCLVisualizer viewer= configure_viewer();
 
+// create vector of threads
+vector<thread> threadVector;
+
+// Read first cloud
+pcl::PointCloud<pcl::PointXYZ>::Ptr next_cloud (new pcl::PointCloud<pcl::PointXYZ>);
+threadVector.push_back(thread( read_pcd_file_callback, next_cloud, initial_frame ));	
+
+
 
 for (int epoch= initial_frame; epoch <= num_frames; ++epoch)
 {
 
+	//------------------ READING PCD FILE ------------------//
   	// Create vaiables
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
 
-	cout<< "Start reading PCD file..."<< endl;
-	read_pcd_file(cloud, epoch);
-	cout<< "End reading PCD file."<< endl;
+	// join previous thread
+	threadVector.at( threadVector.size()-1 ).join();
+	cloud= next_cloud;
+
+	// Start next thread
+	next_cloud.reset(new pcl::PointCloud<pcl::PointXYZ>);
+	threadVector.push_back(thread (read_pcd_file_callback, next_cloud, epoch+1));
+
+	// Reduce size of vector of threads
+	if (threadVector.size() > 2)
+		threadVector.erase( threadVector.begin() + 1 );
+	//------------------------------------------------------//
+	
 
 	// Visualize point cloud - White cloud
 	viewer.removeAllPointClouds();
@@ -133,16 +168,17 @@ for (int epoch= initial_frame; epoch <= num_frames; ++epoch)
 		    clusters.push_back(cloud_cluster);
 
 		    //Save cluster
-		    
-		    cout << "Cluster " << numClusters << " ----> " 
-		    					<< clusters[numClusters-1]->points.size() << " points." << endl;
-		    cout << "density = " << cloud_parameters["density"] << endl;
-		    cout << "SD in X = " << cloud_parameters["sdX"] << endl;
-		    cout << "SD in Y = " << cloud_parameters["sdY"] << endl;
-		    cout << "SD in Z = " << cloud_parameters["sdZ"] << endl;
-		    cout << "slendeness in X = " << cloud_parameters["slendernessX"] << endl;
-		    cout << "slendeness in Y = " << cloud_parameters["slendernessY"] << endl << endl;
-
+		    if (VERBOSE)
+			{
+			    cout << "Cluster " << numClusters << " ----> " 
+			    					<< clusters[numClusters-1]->points.size() << " points." << endl;
+			    cout << "density = " << cloud_parameters["density"] << endl;
+			    cout << "SD in X = " << cloud_parameters["sdX"] << endl;
+			    cout << "SD in Y = " << cloud_parameters["sdY"] << endl;
+			    cout << "SD in Z = " << cloud_parameters["sdZ"] << endl;
+			    cout << "slendeness in X = " << cloud_parameters["slendernessX"] << endl;
+			    cout << "slendeness in Y = " << cloud_parameters["slendernessY"] << endl << endl;
+		    }
 	    }
 	} // End of loop over clusters
 
@@ -160,8 +196,11 @@ for (int epoch= initial_frame; epoch <= num_frames; ++epoch)
 		viewer.addPointCloud<pcl::PointXYZ> (it->cloud, red_color, cloud_cylinder_id);
 		viewer.setPointCloudRenderingProperties 
 								(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 10, cloud_cylinder_id);
-		cout<< "Cylinder "<< counter<< " ----> "<< it->cloud->points.size()<<  endl;
+		if (VERBOSE)
+			cout<< "Cylinder "<< counter<< " ----> "<< it->cloud->points.size()<<  endl;
 	}
+
+
 
 	cout<< "-----------------------------------"<< endl;
 	cout << "# epoch = " << epoch << endl;
@@ -169,8 +208,11 @@ for (int epoch= initial_frame; epoch <= num_frames; ++epoch)
 	cout << "# cylinders = " << cylinders.size() << endl;
 	cout<< "-----------------------------------"<< endl;
 
+
 	//Vierwer
 	viewer.spinOnce ();
+
+
 }
 
 } // End of Main
