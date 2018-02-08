@@ -41,9 +41,9 @@
 #include "to_string.h"
 #include "compute_cloud_parameters.h"
 #include "create_clusters.h"
-#include "initialize_parameters.h"
 #include "read_pcd_file.h"
 #include "configure_viewer.h"
+#include "read_inputs.h"
 
 #define VERBOSE false
 
@@ -73,9 +73,12 @@ void read_pcd_file_callback(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, int epoch
 int main (int argc, char *argv[])
 {
 
+map<string, float> PARAMS;
+if (!read_inputs(PARAMS))
+	cout<< "Error reading paramter files"<< endl;
+
 
 // Declare variables
-int num_frames, initial_frame;
 double meanX, meanY, meanZ, varX, varY, varZ;
 string cloud_cylinder_id;
 vector <Frame> frames;
@@ -83,14 +86,10 @@ vector <Landmark> landmarks;
 vector <Cylinder> cylinders;
 vector <Eigen::Matrix4d> T= read_transformations();
 map<string, double> cloud_parameters;
-parameters P;
 
-// Pass command line arguments
-istringstream (argv[1]) >> initial_frame;
-istringstream (argv[2]) >> num_frames;
+int initial_frame= static_cast<int>(PARAMS["initial_frame"]);
+int num_frames= static_cast<int>(PARAMS["final_frame"]);
 
-// Set the parameters and thresholds
-initialize_parameters(P);
 
 pcl::visualization::PCLVisualizer viewer= configure_viewer();
 
@@ -124,6 +123,7 @@ for (int epoch= initial_frame; epoch <= num_frames; ++epoch)
 	//------------------------------------------------------//
 	
 
+
 	// Visualize point cloud - White cloud
 	viewer.removeAllPointClouds();
 	pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> 
@@ -132,8 +132,8 @@ for (int epoch= initial_frame; epoch <= num_frames; ++epoch)
 
 	// Extraction of clusters
 	vector<pcl::PointIndices> clusters_indices;
-	create_clusters(cloud, clusters_indices, P);
-	
+	create_clusters(cloud, clusters_indices, PARAMS);
+	 
 
 	vector <pcl::PointCloud<pcl::PointXYZ> ::Ptr> clusters; // Vector of pointclouds pointers
 	
@@ -157,11 +157,11 @@ for (int epoch= initial_frame; epoch <= num_frames; ++epoch)
 	    compute_cloud_parameters(cloud_cluster, cloud_parameters);
 
 	    // Check if cluster is valid
-	    if ( cloud_parameters["density"] > P.densityThreshold  		   &&  
-	    	 cloud_parameters["sdX"] < P.sdXYThreshold				   &&
-	    	 cloud_parameters["sdY"] < P.sdXYThreshold				   &&
-	    	 cloud_parameters["slendernessX"] > P.slindernessThreshold &&  
-	    	 cloud_parameters["slendernessY"] > P.slindernessThreshold )
+	    if ( cloud_parameters["density"] > PARAMS["densityThreshold"]  		   &&  
+	    	 cloud_parameters["sdX"] < PARAMS["sdXYThreshold"]				   &&
+	    	 cloud_parameters["sdY"] < PARAMS["sdXYThreshold"]				   &&
+	    	 cloud_parameters["slendernessX"] > PARAMS["slindernessThreshold"] &&  
+	    	 cloud_parameters["slendernessY"] > PARAMS["slindernessThreshold"] )
 	    {
 	    	// Add cluster
 		    ++numClusters; 

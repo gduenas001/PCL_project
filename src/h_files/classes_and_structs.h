@@ -35,17 +35,3 @@ struct Landmark
 	Landmark();
 };
 
-
-class parameters
-{
-public:
-	float 	leafSize,
-	  		minClusterSize,
-	  		clusterTolerance,
-	  		limitsXY,
-	  		limitZlow,
-	  		limitZhigh,
-			densityThreshold, 
-	  	 	slindernessThreshold, 
-	     	sdXYThreshold;
-};

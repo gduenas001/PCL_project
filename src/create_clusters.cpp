@@ -11,7 +11,8 @@
 #include <pcl/search/kdtree.h>
 #include <pcl/search/organized.h>
 #include <pcl/segmentation/extract_clusters.h>
-
+#include <string>
+#include <map>
 
 #include "classes_and_structs.h"
 #include "create_clusters.h"
@@ -22,9 +23,8 @@ using namespace std;
 
 void create_clusters (pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, 
 					  vector<pcl::PointIndices> &cluster_indices,
-					  parameters P)
+					  map<string, float> PARAMS)
 {
-
 	// Voxels
 	// pcl::VoxelGrid<pcl::PointXYZ> vg;
 	// vg.setInputCloud (cloud);
@@ -37,17 +37,17 @@ void create_clusters (pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,
 	// in X
 	pass.setInputCloud (cloud);
 	pass.setFilterFieldName ("x");
-	pass.setFilterLimits (-P.limitsXY, P.limitsXY);
+	pass.setFilterLimits (-PARAMS["limitsXY"], PARAMS["limitsXY"]);
 	pass.filter (*cloud);
 	// in Y
 	pass.setInputCloud (cloud);
 	pass.setFilterFieldName ("y");
-	pass.setFilterLimits (-P.limitsXY, P.limitsXY);
+	pass.setFilterLimits (-PARAMS["limitsXY"], PARAMS["limitsXY"]);
 	pass.filter (*cloud);
 	// in Z
 	pass.setInputCloud (cloud);
 	pass.setFilterFieldName ("z");
-	pass.setFilterLimits (P.limitZlow, P.limitZhigh);
+	pass.setFilterLimits (PARAMS["limitZlow"], PARAMS["limitZhigh"]);
 	pass.filter (*cloud);
 
 
@@ -64,8 +64,8 @@ void create_clusters (pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,
 	pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
 	tree->setInputCloud (cloud);
 	pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
-	ec.setClusterTolerance (P.clusterTolerance);
-	ec.setMinClusterSize (P.minClusterSize);
+	ec.setClusterTolerance (PARAMS["clusterTolerance"]);
+	ec.setMinClusterSize (PARAMS["minClusterSize"]);
 	ec.setSearchMethod (tree);
 	ec.setInputCloud (cloud);
 
