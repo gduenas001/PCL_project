@@ -80,6 +80,7 @@ if (!read_inputs(PARAMS))
 
 // Declare variables
 double meanX, meanY, meanZ, varX, varY, varZ;
+string cloud_cluster_id;
 string cloud_cylinder_id;
 vector <Frame> frames;
 vector <Landmark> landmarks;
@@ -181,7 +182,18 @@ for (int epoch= initial_frame; epoch <= num_frames; ++epoch)
 		    }
 	    }
 	} // End of loop over clusters
-
+	
+	int counter= 0;
+	for (vector<pcl::PointCloud<pcl::PointXYZ>::Ptr >::iterator it= clusters.begin(),
+       it_end= clusters.end(); 
+       it!=it_end; ++it, ++counter)
+  	{
+  		cloud_cluster_id= "cloud_cluster_" + patch::to_string( counter );
+		pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red_color (*it, 255, 0, 0);
+		viewer.addPointCloud <pcl::PointXYZ> (*it, red_color, cloud_cluster_id);
+		viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 10, cloud_cluster_id);
+	}
+/*
 	cylinders.clear();
 	cylinder_segmentation( cylinders, clusters, T[epoch]);
 
@@ -199,7 +211,7 @@ for (int epoch= initial_frame; epoch <= num_frames; ++epoch)
 		if (VERBOSE)
 			cout<< "Cylinder "<< counter<< " ----> "<< it->cloud->points.size()<<  endl;
 	}
-
+*/
 
 
 	cout<< "-----------------------------------"<< endl;

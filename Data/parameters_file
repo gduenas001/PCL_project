@@ -4,8 +4,8 @@ leafSize 0.05
 minClusterSize 10
 clusterTolerance 0.5
 limitsXY 25
-limitZlow -0.7
-limitZhigh 1
+limitZlow 0.0
+limitZhigh 1.7
 densityThreshold 200
 slindernessThreshold 1.0
 sdXYThreshold 0.3
