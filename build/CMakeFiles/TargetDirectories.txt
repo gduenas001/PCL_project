@@ -1,3 +1,0 @@
-/home/osamarobotics-lab/Documents/PCL_project_master/PCL_project/build/CMakeFiles/rebuild_cache.dir
-/home/osamarobotics-lab/Documents/PCL_project_master/PCL_project/build/CMakeFiles/edit_cache.dir
-/home/osamarobotics-lab/Documents/PCL_project_master/PCL_project/build/CMakeFiles/FE.dir
