@@ -78,6 +78,8 @@ if (!read_inputs(PARAMS))
 	cout<< "Error reading paramter files"<< endl;
 
 
+// put true when you want to debug the code (pausing after each time step)
+bool debug = false;
 // Declare variables
 double meanX, meanY, meanZ, varX, varY, varZ;
 string cloud_cluster_id;
@@ -105,7 +107,17 @@ threadVector.push_back(thread( read_pcd_file_callback, next_cloud, initial_frame
 
 for (int epoch= initial_frame; epoch <= num_frames; ++epoch)
 {
+/*
+		//-------------please comment this part if you don't want to debug the code-----------//
+		// configuring point cloud viewer
+		pcl::visualization::PCLVisualizer viewer("PCL Viewer");
+		viewer.setBackgroundColor( 0.0, 0.0, 0.0 );
 
+		//viewer.setFullScreen(true); 
+		viewer.setCameraPosition(-21.1433, -23.4669, 12.7822,0.137915, -0.429331, -1.9301,0.316165, 0.28568, 0.904669);
+		viewer.setCameraClipDistances(0.0792402, 79.2402); 
+		//-----------------------------------------------------------------------------------//
+*/	
 	//------------------ READING PCD FILE ------------------//
   	// Create vaiables
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
@@ -219,10 +231,16 @@ for (int epoch= initial_frame; epoch <= num_frames; ++epoch)
 	cout << "# clusters = " << numClusters << endl;
 	cout << "# cylinders = " << cylinders.size() << endl;
 	cout<< "-----------------------------------"<< endl;
-
-
-	//Vierwer
-	viewer.spinOnce ();
+	
+	if (debug==false){
+		viewer.spinOnce ();
+	}
+	else{
+		while (!viewer.wasStopped ())
+    		{
+    			viewer.spinOnce ();
+    		}
+	}
 
 
 }
