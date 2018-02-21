@@ -101,14 +101,16 @@ vector<thread> threadVector;
 
 // Read first cloud
 pcl::PointCloud<pcl::PointXYZ>::Ptr next_cloud (new pcl::PointCloud<pcl::PointXYZ>);
-threadVector.push_back(thread( read_pcd_file_callback, next_cloud, initial_frame ));	
-
-
+threadVector.push_back(thread( read_pcd_file_callback, next_cloud, initial_frame ));
 
 for (int epoch= initial_frame; epoch <= num_frames; ++epoch)
 {
+
+
 /*
 		//-------------please comment this part if you don't want to debug the code-----------//
+
+
 		// configuring point cloud viewer
 		pcl::visualization::PCLVisualizer viewer("PCL Viewer");
 		viewer.setBackgroundColor( 0.0, 0.0, 0.0 );
@@ -116,15 +118,21 @@ for (int epoch= initial_frame; epoch <= num_frames; ++epoch)
 		//viewer.setFullScreen(true); 
 		viewer.setCameraPosition(-21.1433, -23.4669, 12.7822,0.137915, -0.429331, -1.9301,0.316165, 0.28568, 0.904669);
 		viewer.setCameraClipDistances(0.0792402, 79.2402); 
+
+
 		//-----------------------------------------------------------------------------------//
-*/	
+*/
+
+
 	//------------------ READING PCD FILE ------------------//
   	// Create vaiables
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
+	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud1 (new pcl::PointCloud<pcl::PointXYZ>);
 
 	// join previous thread
 	threadVector.at( threadVector.size()-1 ).join();
 	cloud= next_cloud;
+	cloud1= next_cloud;
 
 	// Start next thread
 	next_cloud.reset(new pcl::PointCloud<pcl::PointXYZ>);
@@ -137,12 +145,12 @@ for (int epoch= initial_frame; epoch <= num_frames; ++epoch)
 	
 
 
-	// Visualize point cloud - White cloud
+	/*// Visualize point cloud - White cloud
 	viewer.removeAllPointClouds();
 	pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> 
 					white_color (cloud, 255, 255, 255);
-	viewer.addPointCloud <pcl::PointXYZ> (cloud, white_color, "cloud_original");
-
+	viewer.addPointCloud <pcl::PointXYZ> (cloud, white_color, "cloud");
+*/
 	// Extraction of clusters
 	vector<pcl::PointIndices> clusters_indices;
 	create_clusters(cloud, clusters_indices, PARAMS);
@@ -195,6 +203,11 @@ for (int epoch= initial_frame; epoch <= num_frames; ++epoch)
 	    }
 	} // End of loop over clusters
 	
+	// Visualize all cloud - White cloud
+	viewer.removeAllPointClouds();
+	pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> white_color (next_cloud, 255, 255, 255);
+	viewer.addPointCloud <pcl::PointXYZ> (next_cloud, white_color, "next_cloud");
+
 	int counter= 0;
 	for (vector<pcl::PointCloud<pcl::PointXYZ>::Ptr >::iterator it= clusters.begin(),
        it_end= clusters.end(); 
@@ -229,7 +242,7 @@ for (int epoch= initial_frame; epoch <= num_frames; ++epoch)
 	cout<< "-----------------------------------"<< endl;
 	cout << "# epoch = " << epoch << endl;
 	cout << "# clusters = " << numClusters << endl;
-	cout << "# cylinders = " << cylinders.size() << endl;
+	//cout << "# cylinders = " << cylinders.size() << endl;
 	cout<< "-----------------------------------"<< endl;
 	
 	if (debug==false){
