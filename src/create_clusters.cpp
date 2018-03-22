@@ -17,6 +17,7 @@
 #include "classes_and_structs.h"
 #include "create_clusters.h"
 
+//#include <pcl/filters/statistical_outlier_removal.h>
 
 using namespace std;
 
@@ -26,11 +27,11 @@ void create_clusters (pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,
 					  map<string, float> PARAMS)
 {
 	// Voxels
-	// pcl::VoxelGrid<pcl::PointXYZ> vg;
-	// vg.setInputCloud (cloud);
-	// vg.setLeafSize (P.leafSize, P.leafSize, P.leafSize);
+	//pcl::VoxelGrid<pcl::PointXYZ> vg;
+	//vg.setInputCloud (cloud);
+	//vg.setLeafSize (PARAMS["leafSizeXY"],PARAMS["leafSizeXY"],PARAMS["leafSizeZ"]);
 	// // vg.setMinimumPointsNumberPerVoxel(2);
-	// vg.filter (*cloud);
+	//vg.filter (*cloud);
 
 	// Eliminate far points
 	pcl::PassThrough<pcl::PointXYZ> pass;
@@ -50,6 +51,11 @@ void create_clusters (pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,
 	pass.setFilterLimits (PARAMS["limitZlow"], PARAMS["limitZhigh"]);
 	pass.filter (*cloud);
 
+	/*pcl::StatisticalOutlierRemoval<pcl::PointXYZ> sor;
+    sor.setInputCloud (cloud);
+    sor.setMeanK (50);
+    sor.setStddevMulThresh (1);
+    sor.filter (*cloud);*/
 
 
 	// Remove outliers

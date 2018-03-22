@@ -45,7 +45,7 @@
 #include "configure_viewer.h"
 #include "read_inputs.h"
 
-#define VERBOSE false
+#define VERBOSE true
 
 
 using namespace std;
@@ -61,7 +61,7 @@ void read_pcd_file_callback(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, int epoch
 	stringstream sa;
 	sa << setw(6) << setfill('0') << epoch;
 	filename2= sa.str();
-	reader.read ("../Data/pcd-files/KITTI/" + filename2 + ".pcd", *cloud);
+	reader.read ("/media/osamarobotics-lab/Disk 0/Two_LIDARs_Data_2018_03_14/" + filename2 + ".pcd", *cloud);
 	if (VERBOSE)
 		cout<< "Read next cloud: "<< epoch<< endl;
 }
@@ -87,6 +87,7 @@ vector <Landmark> landmarks;
 vector <Cylinder> cylinders;
 vector <Eigen::Matrix4d> T= read_transformations();
 map<string, double> cloud_parameters;
+pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
 
 int initial_frame= static_cast<int>(PARAMS["initial_frame"]);
 int num_frames= static_cast<int>(PARAMS["final_frame"]);
@@ -103,12 +104,10 @@ threadVector.push_back(thread( read_pcd_file_callback, next_cloud, initial_frame
 
 
 
-for (int epoch= initial_frame; epoch <= num_frames; ++epoch)
+for (int epoch= initial_frame; epoch < num_frames; ++epoch)
 {
 
 	//------------------ READING PCD FILE ------------------//
-  	// Create vaiables
-	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
 
 	// join previous thread
 	threadVector.at( threadVector.size()-1 ).join();
@@ -156,13 +155,14 @@ for (int epoch= initial_frame; epoch <= num_frames; ++epoch)
     	extract.filter (*cloud_cluster);
 
 	    compute_cloud_parameters(cloud_cluster, cloud_parameters);
-
+	    if (!PARAMS["Basic"]){
 	    // Check if cluster is valid
-	    if ( cloud_parameters["density"] > PARAMS["densityThreshold"]  		   &&  
+	    if ( //cloud_parameters["density"] > PARAMS["densityThreshold"]  		   &&  
 	    	 cloud_parameters["sdX"] < PARAMS["sdXYThreshold"]				   &&
 	    	 cloud_parameters["sdY"] < PARAMS["sdXYThreshold"]				   &&
 	    	 cloud_parameters["slendernessX"] > PARAMS["slindernessThreshold"] &&  
-	    	 cloud_parameters["slendernessY"] > PARAMS["slindernessThreshold"] )
+	    	 cloud_parameters["slendernessY"] > PARAMS["slindernessThreshold"] &&
+	    	 cloud_parameters["very_close"] == 0 )
 	    {
 	    	// Add cluster
 		    ++numClusters; 
@@ -180,7 +180,25 @@ for (int epoch= initial_frame; epoch <= num_frames; ++epoch)
 			    cout << "slendeness in X = " << cloud_parameters["slendernessX"] << endl;
 			    cout << "slendeness in Y = " << cloud_parameters["slendernessY"] << endl << endl;
 		    }
-	    }
+	}
+}
+	else{
+		++numClusters; 
+		    clusters.push_back(cloud_cluster);
+
+		    //Save cluster
+		    if (VERBOSE)
+			{
+			    cout << "Cluster " << numClusters << " ----> " 
+			    					<< clusters[numClusters-1]->points.size() << " points." << endl;
+			    cout << "density = " << cloud_parameters["density"] << endl;
+			    cout << "SD in X = " << cloud_parameters["sdX"] << endl;
+			    cout << "SD in Y = " << cloud_parameters["sdY"] << endl;
+			    cout << "SD in Z = " << cloud_parameters["sdZ"] << endl;
+			    cout << "slendeness in X = " << cloud_parameters["slendernessX"] << endl;
+			    cout << "slendeness in Y = " << cloud_parameters["slendernessY"] << endl << endl;
+			}
+	}
 	} // End of loop over clusters
 	
 	int counter= 0;
@@ -191,7 +209,7 @@ for (int epoch= initial_frame; epoch <= num_frames; ++epoch)
   		cloud_cluster_id= "cloud_cluster_" + patch::to_string( counter );
 		pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red_color (*it, 255, 0, 0);
 		viewer.addPointCloud <pcl::PointXYZ> (*it, red_color, cloud_cluster_id);
-		viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 10, cloud_cluster_id);
+		viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 5, cloud_cluster_id);
 	}
 /*
 	cylinders.clear();
@@ -217,12 +235,17 @@ for (int epoch= initial_frame; epoch <= num_frames; ++epoch)
 	cout<< "-----------------------------------"<< endl;
 	cout << "# epoch = " << epoch << endl;
 	cout << "# clusters = " << numClusters << endl;
-	cout << "# cylinders = " << cylinders.size() << endl;
+	//cout << "# cylinders = " << cylinders.size() << endl;
 	cout<< "-----------------------------------"<< endl;
 
 
 	//Vierwer
-	viewer.spinOnce ();
+	if (PARAMS["Debug"]){
+		while (1){
+			viewer.spinOnce ();
+			}
+		}
+		viewer.spinOnce ();
 
 
 }
